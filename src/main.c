@@ -15,8 +15,14 @@
 #define WORK_SPACE 0x4000
 #define KRAJ_RAMA 0x4000
 
+// SCALING MODES
+#define CLOSEST_MULTIPLE 1
+#define STRETCH_ASPECT   2
+#define FULL_STRECH      3
+#define ORIGINAL_CENTER  4
+
 static const int MAX_X = 256; // 32 karaktera
-static const int MAX_Y = 224; // 8*16+8 
+static const int MAX_Y = 216; // 8*16+8 
 							  // Prva i posljednja linija od po 8 ekranskih su statusne
 
 static const int VISINA = 13;
@@ -29,11 +35,10 @@ static SDL_Keycode Kmap[54]={ 0, SDLK_a, SDLK_b, SDLK_c, SDLK_d, SDLK_e, SDLK_f,
 				 SDLK_y, SDLK_z, SDLK_UP,SDLK_DOWN,SDLK_LEFT,SDLK_RIGHT,SDLK_SPACE,
 				 SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7,
 				 SDLK_8, SDLK_9, SDLK_COLON, SDLK_QUOTE, SDLK_COMMA, SDLK_EQUALS, 
-				 SDLK_STOP, SDLK_SLASH, SDLK_RETURN, SDLK_TAB, SDLK_LALT, SDLK_DELETE,
+				 SDLK_PERIOD, SDLK_SLASH, SDLK_RETURN, SDLK_TAB, SDLK_LALT, SDLK_DELETE,
 				 SDLK_SCROLLLOCK, SDLK_LSHIFT};
 
 
-char *bafer; // ?
 Uint8 Fassst; // ???????
 Uint8    *TZZ;       // TabelaZameneZnakova
 Uint8    EZP[512];   // Ekran Za Porediti
@@ -41,8 +46,12 @@ char *MEMORY;
 int Z80_IRQ;                    // Current IRQ status. Checked after EI occurs.
 int HorPos;
 
+int windowW = MAX_X, windowH = MAX_Y;
+
 // Globalni objekti za render i prozor
 SDL_Window *globWin;
+SDL_Surface *globFB;
+SDL_Rect globScalingRect;
 SDL_Surface *globBMP, *globFnt;
 SDL_Event globEvent;
 Z80 R;
@@ -52,8 +61,8 @@ Uint32 zadnjiFrame = 0; // sluzi za spasavanje proc od pozara
 // OPCIJE ZA KORISNIKA
 _Bool CrnaPodzadina = 1;
 Uint32 FrameRate = 50;
-Uint16 S_gfx_X=320;
-Uint16 S_gfx_Y=240;
+Uint8 scaleMode = CLOSEST_MULTIPLE;
+
 
 // implicit
 void OsveziEkran (void);
@@ -133,17 +142,16 @@ Uint8 DebugZ80(register Z80 *R) {
 // kontrolni tasteri (Izlazak, Reset, NMI, Status, LOAD/SAVE), meri stvarni
 // FPS ukoliko se ne radi o SYNC 1 modu, i sve ostalo sto je potrebno.
 
-word LoopZ80(register Z80 *R)
-{
-	char    bafer[128];
+Uint16 LoopZ80(register Z80 *R) {
+	char bafer[128];
 
 	// Reset the ICount so that next interrupt happens 
 	R->ICount=CPU_SPEED / FrameRate; // to ensure that all operations will be done
 
-    // Da li treba da se pomera slika ?
+	// Da li treba da se pomera slika ?
 	if (HorPos!=MEMORY[0x2BA8]) {
 		// Crni ekran
-		SDL_FillRect(globBMP, NULL, CRNA);
+		SDL_FillRect(globFB, NULL, CRNA);
 		HorPos=MEMORY[0x2BA8];
 	}
 
@@ -159,28 +167,27 @@ word LoopZ80(register Z80 *R)
 	//}
 
 	// Ako treba ispisi statusnu liniju.
-	//if (ShowFPS)
-	//{
-	//    text_mode(-1);
+	//if (ShowFPS) {
+	//	text_mode(-1);
 
-	//    ObrisiGornjiDeoEkrana();
+	//	ObrisiGornjiDeoEkrana();
 
-	//    sprintf (bafer, "FPS                CLK          ");
-	//    textout (ekran, font, bafer, 0, 0, 7);
+	//	sprintf (bafer, "FPS                CLK          ");
+	//	textout (ekran, font, bafer, 0, 0, 7);
 
-	//    sprintf (bafer, "%d", Disp_fps);
-	//    textout (ekran, font, bafer, 32, 0, 6);
+	//	sprintf (bafer, "%d", Disp_fps);
+	//	textout (ekran, font, bafer, 32, 0, 6);
 
-	//      sprintf (bafer, "%d", Disp_fps*(R->ICount));
-	//    sprintf (bafer, "%d", Disp_fps*(R->ICount));
-	//    textout (ekran, font, bafer, 184, 0, 6);
+	//	sprintf (bafer, "%d", Disp_fps*(R->ICount));
+	//	sprintf (bafer, "%d", Disp_fps*(R->ICount));
+	//	textout (ekran, font, bafer, 184, 0, 6);
 
-	//    OsveziPrviRed ();
+	//	OsveziPrviRed ();
 	//}
 
 	// Da li je screen saver aktivan ?
 	//if (ssaver)
-	//    FadeInOut();
+	//	FadeInOut();
 
 	// Broji frejmove.
 	//Cur_fps++;
@@ -191,37 +198,27 @@ word LoopZ80(register Z80 *R)
 
 	//InitUnos=1;
 
-    // Da prikazem/uklonim statusnu liniju ?
-
-    //if (key[KEY_F11])
-    //{
-    //    if (!F11_hold)
-    //    {
-    //        F11_hold=DA;
-    //        InicijalizujSSaver();
-
-    //        if (ShowFPS)
-    //        {
-    //            ShowFPS=0;
-    //            ObrisiGornjiDeoEkrana();
-    //            OsveziPrviRed ();
-    //        }
-    //        else
-    //            ShowFPS=1;
-    //    }
-    //}
-    //else
-    //    F11_hold=NE;
-
-//    Z80_GetRegs (&R);        // Daj bre te registre ovamo ...
+	// Da prikazem/uklonim statusnu liniju ?
+	
+	//if (key[KEY_F11]) {
+	//	if (!F11_hold) {
+	//		F11_hold=DA;
+	//		InicijalizujSSaver();
+	//		if (ShowFPS) {
+	//			ShowFPS=0;
+	//			ObrisiGornjiDeoEkrana();
+	//			OsveziPrviRed ();
+	//		} else ShowFPS=1;
+	//	}
+	//} else F11_hold=NE;
+	//Z80_GetRegs (&R);        // Daj bre te registre ovamo ...
 
 	if (!(R->IFF & IFF_2))
 		Fassst++;
 	else
 		Fassst=0;
 
-//        OsveziEkran ();
-    // Ako je EI osvezavaj i ekran i tastaturu, kao i kod prave masine.
+	// Ako je EI osvezavaj i ekran i tastaturu, kao i kod prave masine.
 	if (!Fassst) {
 		OcitajTastaturu ();
 		OsveziEkran ();
@@ -230,7 +227,7 @@ word LoopZ80(register Z80 *R)
 			// Because screen is made under IRQ, there is no more further screen updates.
 			case 1:
 				// Need to clear it ?
-				SDL_FillRect(globBMP, NULL, CRNA);
+				SDL_FillRect(globFB, NULL, CRNA);
 				break;
 
 			// Stay where You are.
@@ -242,12 +239,70 @@ word LoopZ80(register Z80 *R)
 	return 0;
 }
 
+void UpdateWindowScalingRules(void) {
+
+	// prozor moze biti bilo koje velicine
+	SDL_SetWindowMinimumSize(globWin, 0, 0);
+
+	switch(scaleMode) {
+		case FULL_STRECH: // puna slika
+			globScalingRect.x = 0; globScalingRect.y = 0;
+			globScalingRect.w = windowW; globScalingRect.h = windowH;
+			break;
+		case STRETCH_ASPECT: { // razvucena slika ali odnos ostaje isti
+			if((float)windowW/windowH > (float)MAX_X/MAX_Y) {
+				float scale = (float)windowH/MAX_Y;
+				globScalingRect.x = (windowW-MAX_X*scale)/2;
+				globScalingRect.y = 0;
+				globScalingRect.w = MAX_X*scale;
+				globScalingRect.h = windowH;
+			} else {
+				float scale = (float)windowW/MAX_X;
+				globScalingRect.y = (windowH-MAX_Y*scale)/2;
+				globScalingRect.x = 0;
+				globScalingRect.h = MAX_Y*scale;
+				globScalingRect.w = windowW;
+			}
+			break;
+		}
+		case CLOSEST_MULTIPLE: { // N*minVisina,N*minSirina
+			if((float)windowW/windowH > (float)MAX_X/MAX_Y) {
+				float scale = floor((float)windowH/MAX_Y);
+				globScalingRect.x = (windowW-MAX_X*scale)/2;
+				globScalingRect.y = (windowH-MAX_Y*scale)/2;
+				globScalingRect.w = MAX_X*scale;
+				globScalingRect.h = MAX_Y*scale;
+			} else {
+				float scale = floor((float)windowW/MAX_X);
+				globScalingRect.x = (windowW-MAX_X*scale)/2;
+				globScalingRect.y = (windowH-MAX_Y*scale)/2;
+				globScalingRect.w = MAX_X*scale;
+				globScalingRect.h = MAX_Y*scale;
+			}
+
+			// ogranici minimalnu velicinu da se ne polomi algoritam
+			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y); 
+			break;
+		}
+		case ORIGINAL_CENTER: { // originalna slika u centru
+			globScalingRect.x = (windowW-MAX_X)/2;
+			globScalingRect.y = (windowH-MAX_Y)/2;
+			globScalingRect.w = MAX_X;
+			globScalingRect.h = MAX_Y;
+
+			// ogranici minimalnu velicinu da se ne polomi algoritam
+			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y); 
+			break;
+		}
+	}
+}
 
 void OcitajTastaturu (void) {
 	Uint8 A;
 
-	// Jer SDL2 voli da komplikuje, trebaju se svi eventovi procesovati PRIJE
-	// NEGO STO JE UOPSTE MOGUCE CITATI STANJE TASTATURE
+	// Jer SDL2 voli da komplikuje, trebaju se svi eventovi
+	// procesovati PRIJE NEGO STO JE UOPSTE MOGUCE CITATI STANJE
+	// TASTATURE
 	while(SDL_PollEvent(&globEvent)) {
 		switch(globEvent.type) {
 			case SDL_WINDOWEVENT:
@@ -257,6 +312,9 @@ void OcitajTastaturu (void) {
 						exit(EXIT_SUCCESS);
 						break;
 					case SDL_WINDOWEVENT_RESIZED:
+						windowW = globEvent.window.data1;
+						windowH = globEvent.window.data2;
+						UpdateWindowScalingRules();
 						globBMP = SDL_GetWindowSurface(globWin);
 						break;
 				}
@@ -329,8 +387,8 @@ void NacrtajKarakter(Uint8 karakter, Uint8 x, Uint8 y) {
 	src.x = 0; src.y = karakter*VISINA; src.w = SIRINA; src.h = VISINA;
 	dest.x = x*SIRINA; dest.y = y*VISINA; dest.w = SIRINA; dest.h = VISINA;
 
-	SDL_FillRect(globBMP, &dest, CRNA);
-	SDL_BlitSurface(globFnt, &src, globBMP, &dest);
+	SDL_FillRect(globFB, &dest, CRNA);
+	SDL_BlitSurface(globFnt, &src, globFB, &dest);
 }
 
 
@@ -367,12 +425,16 @@ void OsveziEkran(void)
 			offset = MAX_Y-16;
 		}
 
-		SDL_Rect x = {((S_gfx_X-MAX_X)/2)-88+(MEMORY[0x2BA8]*8),          ((S_gfx_Y-MAX_Y)/2)+8,
-		             (((S_gfx_X-MAX_X)/2)-88+(MEMORY[0x2BA8]*8))+MAX_X-1, ((S_gfx_Y-MAX_Y)/2)+8+offset};
-		SDL_FillRect(globBMP, &x, barva);
+		SDL_Rect x = {(-88+(MEMORY[0x2BA8]*8), 8,
+			-88+(MEMORY[0x2BA8]*8))+MAX_X-1,
+			8+offset};
+		SDL_FillRect(globFB, &x, barva);
 	}
 
 	memcpy (EZP, &MEMORY[0x2800], 512);
+
+	SDL_FillRect(globBMP, NULL, CRNA);
+	SDL_BlitScaled(globFB, NULL, globBMP, &globScalingRect);
 	SDL_UpdateWindowSurface(globWin);
 
 	// logika koja managuje frametimeove
@@ -384,9 +446,11 @@ void OsveziEkran(void)
 
 void inicijalizujProzor() {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	globWin = SDL_CreateWindow("Galaksija emulator", SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED, MAX_X, MAX_Y, 0);
+	globWin = SDL_CreateWindow("Galaksija emulator",
+			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+			MAX_X, MAX_Y, SDL_WINDOW_RESIZABLE);
 	globBMP = SDL_GetWindowSurface(globWin);
+	UpdateWindowScalingRules();
 }
 
 void inicijalizujGalaksiju() {
@@ -395,21 +459,23 @@ void inicijalizujGalaksiju() {
 	Uint16 n,adresa;
 	FILE *rom, *chrgen;
 
-	if ((chrgen=fopen("chrgen.bin","rb"))==NULL) {
+	if ((chrgen=fopen("CHRGEN.BIN","rb"))==NULL) {
 		fprintf(stderr, "CHRGEN.BIN nije prisutan!\n");
 		SDL_Quit();
 		exit(EXIT_FAILURE);
 	}
 
-	bafer = malloc(2048);
+	char *bafer = malloc(2048);
 	fread(bafer, 1, 2048, chrgen);
 
+	globFB = SDL_CreateRGBSurface(0, MAX_X, MAX_Y, 32,
+			0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 	globFnt = SDL_CreateRGBSurface(0, SIRINA, VISINA*BROJ_ZNAKOVA,
 			32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 
 	if(CrnaPodzadina)
-		SDL_FillRect(globBMP, NULL, CRNA);
-	else SDL_FillRect(globBMP, NULL, SIVA);
+		SDL_FillRect(globFB, NULL, CRNA);
+	else SDL_FillRect(globFB, NULL, SIVA);
 
 	// Radi ubrzavanja operacije pretvaranje bitmap fonta u SDL2 framebuffer
 	// mi zahtjevamo pointer od samog SDL objekta za framebuffer
@@ -438,10 +504,10 @@ void inicijalizujGalaksiju() {
 	}
 	SDL_UnlockSurface(globFnt); // zavrsi framebuffer biznis
 
-	free (bafer);
-	fclose (chrgen);
+	free(bafer);
+	fclose(chrgen);
 
-	if ((rom=fopen("rom1.bin","rb"))==NULL) {
+	if ((rom=fopen("ROM1.BIN","rb"))==NULL) {
 		fprintf(stderr, "ROM1.BIN nije prisutan!\n");
 		SDL_Quit();
 		exit(EXIT_FAILURE);
@@ -455,6 +521,12 @@ void inicijalizujGalaksiju() {
 	fread (&MEMORY[0], 1, 4096, rom);
 	fclose (rom);
 
+	if((rom=fopen("ROM2.BIN", "rb"))!=NULL) {
+		fread(&MEMORY[0x1000], 1, 4096, rom);
+		fclose(rom);
+	} else {
+		printf("ROM2.BIN nije prisutan, idemo dalje bez njega!\n");
+	}
 
 	// Tastatura
 	for (n=0x2000; n<0x2800; n++)
@@ -500,7 +572,11 @@ void StartujMasinu (void) {
 }
 
 void ocistiSve() {
+	SDL_FreeSurface(globFB);
+	SDL_FreeSurface(globFnt);
+	SDL_FreeSurface(globBMP);
 	SDL_DestroyWindow(globWin);
+	SDL_Quit();
 }
 
 int main(int argc, char *argv[]) {

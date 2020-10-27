@@ -16,4 +16,4 @@ add_executable(
 
 add_definitions(${SDL2_CFLAGS_OTHER})
 include_directories(${SDL2_INCLUDE_DIRS} inc)
-target_link_libraries(GalEmu ${SDL2_LIBRARIES})
+target_link_libraries(GalEmu ${SDL2_LIBRARIES} m)
