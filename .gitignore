@@ -1,0 +1,6 @@
+build*
+*.files
+*.includes
+*.user
+*.config
+CMakeLists.txt.*
