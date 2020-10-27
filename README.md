@@ -23,5 +23,6 @@ cd Galaksija-Emulator
 mkdir build
 cd build
 cmake ..
+make
 ./GalEmu
 ```
