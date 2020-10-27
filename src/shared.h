@@ -1,5 +1,9 @@
-#include <SDL2/SDL.h>
 #include "Z80/Z80.h"
+#include <stdint.h>
+
+#define Uint8 uint8_t
+#define Uint16 uint16_t
+#define Uint32 uint32_t
 
 // MAKROI
 #define RET_ON_ERR(x) { Uint16 e = x; if(e) return e; }
@@ -28,8 +32,6 @@
 #define FULL_STRECH      3
 #define ORIGINAL_CENTER  4
 
-extern const SDL_Keycode Kmap[54];
-
 // Globalne variable
 extern Uint8 Fassst;	// ???????
 extern Uint8 *TZZ;		// TabelaZameneZnakova
@@ -41,11 +43,6 @@ extern int HorPos;
 extern int windowW, windowH;
 
 // Globalni objekti za render i prozor
-extern SDL_Window *globWin;
-extern SDL_Surface *globFB;
-extern SDL_Rect globScalingRect;
-extern SDL_Surface *globBMP, *globFnt;
-extern SDL_Event globEvent;
 extern Z80 R;
 
 extern Uint32 zadnjiFrame; // sluzi za spasavanje proc od pozara
