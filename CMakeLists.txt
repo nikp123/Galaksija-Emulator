@@ -12,6 +12,9 @@ add_executable(
 	GalEmu WIN32
 	inc/Z80/Z80.c
 	src/main.c
+	src/z80.c
+	src/sdl2_main.c
+	src/shared.c
 )
 
 add_definitions(${SDL2_CFLAGS_OTHER})
