@@ -18,3 +18,11 @@ _Bool crnaPodzadina = 1;
 Uint32 FrameRate = 50;
 Uint8 scaleMode = CLOSEST_MULTIPLE;
 
+size_t fileSize(FILE *fp) {
+	size_t wasPosition = ftell(fp); // back up address
+	fseek(fp, 0, SEEK_END);
+	size_t maxPosition = ftell(fp);
+	fseek(fp, wasPosition, SEEK_SET); // restore
+	return maxPosition;
+}
+

@@ -52,3 +52,4 @@ extern _Bool crnaPodzadina;
 extern Uint32 FrameRate;
 extern Uint8 scaleMode;
 
+extern size_t fileSize(FILE *fp);

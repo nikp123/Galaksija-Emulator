@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 
 #include "shared.h"
+#include "tinyfiledialogs/tinyfiledialogs.h"
+#include "z80.h"
 #include "sdl2_main.h"
 
 SDL_Window *globWin;
@@ -106,6 +108,12 @@ Uint16 ocitajTastaturu(void) {
 						break;
 				}
 				break;
+			case SDL_DROPFILE: {
+				char *dropped_filedir = globEvent.drop.file;
+				ucitajStanje(dropped_filedir);
+				SDL_free(dropped_filedir);    // Free dropped_filedir memory
+				break;
+			}
 		}
 	}
 
@@ -127,6 +135,11 @@ Uint16 ocitajTastaturu(void) {
 		} else if(kS[SDL_SCANCODE_N]) {
 			// HARD BREJK
 			IntZ80(&R, INT_NMI);
+		} else if(kS[SDL_SCANCODE_S]) {
+			const char *fileTypes[] = { "*.gal" };
+			const char *fajl = tinyfd_saveFileDialog("Sacuvajte stanje", 
+				"stanje.gal", 1, fileTypes, "Stanje Galaksije");
+			if(fajl) sacuvajStanje(fajl);
 		}
 	}
 
