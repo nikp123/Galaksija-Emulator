@@ -109,9 +109,9 @@ Uint16 ocitajTastaturu(void) {
 				}
 				break;
 			case SDL_DROPFILE: {
-				char *dropped_filedir = globEvent.drop.file;
+				const char *dropped_filedir = globEvent.drop.file;
 				ucitajStanje(dropped_filedir);
-				SDL_free(dropped_filedir);    // Free dropped_filedir memory
+				SDL_free((void*)dropped_filedir);    // Free dropped_filedir memory
 				break;
 			}
 		}
@@ -141,7 +141,7 @@ Uint16 ocitajTastaturu(void) {
 				"stanje.gal", 1, fileTypes, "Stanje Galaksije");
 			if(fajl) sacuvajStanje(fajl);
 		} else if(kS[SDL_SCANCODE_L]) {
-			char *fajl = tinyfd_openFileDialog("Otvori stanje", NULL, 1, fileTypes, "Stanje galaksije", 0);
+			const char *fajl = tinyfd_openFileDialog("Otvori stanje", NULL, 1, fileTypes, "Stanje galaksije", 0);
 			if(fajl) ucitajStanje(fajl);
 		}
 	}
@@ -229,8 +229,8 @@ void osveziEkran(void) {
 			offset = MAX_Y-16;
 		}
 
-		SDL_Rect x = {(-88+(MEMORY[0x2BA8]*8), 8,
-			-88+(MEMORY[0x2BA8]*8))+MAX_X-1,
+		SDL_Rect x = {(-88+MEMORY[0x2BA8]*8), 8,
+			-88+(MEMORY[0x2BA8]*8)+MAX_X-1,
 			8+offset};
 		SDL_FillRect(globFB, &x, crnaPodzadina ? CRNA : SIVA);
 	}
@@ -317,7 +317,7 @@ void inicijalizujGalaksiju() {
 	}
 
 	// RAM
-	if ((MEMORY=(char *)malloc(WORK_SPACE))==NULL) {
+	if ((MEMORY=(uint8_t *)malloc(WORK_SPACE))==NULL) {
 		fprintf(stderr, "Memorijski problem u __FILE__:__LINE__!\n");
 		SDL_Quit();
 		exit(EXIT_FAILURE);

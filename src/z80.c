@@ -85,6 +85,7 @@ void PatchZ80(register Z80 *R) {
 }
 
 Uint8 DebugZ80(register Z80 *R) {
+	return 0; // PLACEHOLDER
 }
 
 //ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -139,11 +140,11 @@ Uint16 LoopZ80(register Z80 *R) {
 	return 0;
 }
 
-Uint8 ucitajStanje(char *fajl) {
+uint8_t ucitajStanje(const char *fajl) {
 	FILE *f;
 
 	if((f=fopen(fajl, "rb"))==NULL) {
-		fprintf(stderr, "Nije moguce ucitati __FILE__:__LINE__ %s\n");
+		fprintf(stderr, "Nije moguce ucitati __FILE__:__LINE__ %s\n", fajl);
 		return 1;
 	}
 
@@ -211,7 +212,7 @@ Uint8 ucitajStanje(char *fajl) {
 	return 0;
 }
 
-Uint8 sacuvajStanje(const char *fajl) {
+uint8_t sacuvajStanje(const char *fajl) {
 	FILE *f;
 
 	if((f=fopen(fajl, "wb"))==NULL) {
