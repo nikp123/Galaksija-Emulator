@@ -72,7 +72,7 @@ void UpdateWindowScalingRules(void) {
 			}
 
 			// ogranici minimalnu velicinu da se ne polomi algoritam
-			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y); 
+			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y);
 			break;
 		}
 		case ORIGINAL_CENTER: { // originalna slika u centru
@@ -82,7 +82,7 @@ void UpdateWindowScalingRules(void) {
 			globScalingRect.h = MAX_Y;
 
 			// ogranici minimalnu velicinu da se ne polomi algoritam
-			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y); 
+			SDL_SetWindowMinimumSize(globWin, MAX_X, MAX_Y);
 			break;
 		}
 	}
@@ -125,6 +125,7 @@ Uint16 ocitajTastaturu(void) {
 
 	// Special key time :DDDDD
 	if(kS[SDL_SCANCODE_LCTRL]) {
+		const char *fileTypes[] = { "*.gal" };
 		if(kS[SDL_SCANCODE_Q]) { // Izlaz
 			return INT_QUIT;
 		} else if(kS[SDL_SCANCODE_R]) {
@@ -136,10 +137,12 @@ Uint16 ocitajTastaturu(void) {
 			// HARD BREJK
 			IntZ80(&R, INT_NMI);
 		} else if(kS[SDL_SCANCODE_S]) {
-			const char *fileTypes[] = { "*.gal" };
-			const char *fajl = tinyfd_saveFileDialog("Sacuvajte stanje", 
+			const char *fajl = tinyfd_saveFileDialog("Sacuvajte stanje",
 				"stanje.gal", 1, fileTypes, "Stanje Galaksije");
 			if(fajl) sacuvajStanje(fajl);
+		} else if(kS[SDL_SCANCODE_L]) {
+			char *fajl = tinyfd_openFileDialog("Otvori stanje", NULL, 1, fileTypes, "Stanje galaksije", 0);
+			if(fajl) ucitajStanje(fajl);
 		}
 	}
 
@@ -276,7 +279,7 @@ void inicijalizujGalaksiju() {
 	// Radi ubrzavanja operacije pretvaranje bitmap fonta u SDL2 framebuffer
 	// mi zahtjevamo pointer od samog SDL objekta za framebuffer
 	// pa preko njega ga crtamo
-	SDL_LockSurface(globFnt); 
+	SDL_LockSurface(globFnt);
 	Uint8 *pixel = (Uint8*)globFnt->pixels;
 	for (karakter=0; karakter<BROJ_ZNAKOVA; karakter++) {
 		for (n=0; n<VISINA; n++) {
@@ -293,7 +296,7 @@ void inicijalizujGalaksiju() {
 				a<<=1;
 			}
 
-			// kad jebes sa framebufferom, trebas biti takodje veoma oprezan 
+			// kad jebes sa framebufferom, trebas biti takodje veoma oprezan
 			// pogledaj SDL2 dokumentaciju zasto
 			pixel+=globFnt->pitch-SIRINA*4;
 		}
@@ -340,18 +343,18 @@ void inicijalizujGalaksiju() {
 	// Tastatura
 	for (n=0x2000; n<0x2800; n++)
 		MEMORY[n]=0xFF;
-	
+
 	// Ekran
 	for (n=0x2800; n<0x2A00; n++)
 		MEMORY[n]=' '+n;
-	
+
 	// 6116-ice
 	for (n=0x2A00; n<KRAJ_RAMA; n++)
 		MEMORY[n]=0;
 
 	// TZZ je iskoriscen da bi se izbegla provera unutar glavne petlje za ispis.
 	TZZ=malloc(256);
-	
+
 	for (n=0; n<256; n++) {
 		if ((n>63 && n<96) || (n>127 && n < 192)) {
 			TZZ[n]=n-64;

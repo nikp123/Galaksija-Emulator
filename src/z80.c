@@ -101,7 +101,7 @@ Uint8 DebugZ80(register Z80 *R) {
 Uint16 LoopZ80(register Z80 *R) {
 	char bafer[128];
 
-	// Reset the ICount so that next interrupt happens 
+	// Reset the ICount so that next interrupt happens
 	R->ICount=CPU_SPEED / FrameRate; // to ensure that all operations will be done
 
 	// Da li treba da se pomera slika ?
@@ -158,7 +158,7 @@ Uint8 ucitajStanje(char *fajl) {
 	if(fileSize(f) == 8268) {
 		Z80_RegsDOS DOS_R;
 		fread(&DOS_R, 1, sizeof(Z80_RegsDOS), f);
-		fread(&MEMORY[0x2000], 1, WORK_SPACE-0x2000, f);
+		fread(&MEMORY[0x2000], 1, KRAJ_RAMA-0x2000, f);
 		// Convert registers Now !
 		R.AF.W = DOS_R.AF.W.l;
 		R.BC.W = DOS_R.BC.W.l;
@@ -179,7 +179,8 @@ Uint8 ucitajStanje(char *fajl) {
 		R.I = DOS_R.I;
 		R.R = (DOS_R.R&127)|(DOS_R.R2&128);
 	} else { // normal "modern" savestate
-		fread(&R, 1, sizeof(R), f);
+		fread(&R, 1, sizeof(R) - sizeof(void*), f);
+		fseek(f, sizeof(uint32_t), SEEK_CUR);
 		fread(&MEMORY[0x2000], 1, WORK_SPACE-0x2000, f);
 	}
 	fclose(f);
