@@ -1,8 +1,9 @@
-#include "Z80/Z80.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "Z80/Z80.h"
 
 #define Uint8 uint8_t
 #define Uint16 uint16_t
@@ -12,8 +13,8 @@
 #define RET_ON_ERR(x) { Uint16 e = x; if(e) return e; }
 
 // BOJE
-#define CRNA 0x00000000
-#define SIVA 0x80808080
+#define CRNA 0xff000000
+#define SIVA 0xff003535
 #define BELA 0xffffffff
 
 // SISTEMSKE KONSTANTE, ADRESE I OSTALE GLUPOSTI
