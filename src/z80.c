@@ -38,9 +38,11 @@ void Z80_Out (byte Port,byte Value) {
 */
 
 void OutZ80(register Uint16 Port,register Uint8 Value) {
+	return; // PLACEHOLDER
 }
 
 Uint8 InZ80(register Uint16 Port) {
+	return 0; // PLACEHOLDER
 }
 
 // Svako citanje iz memorije emulatora se obavlja ovde. Funkcija mora da bude
@@ -111,15 +113,6 @@ Uint16 LoopZ80(register Z80 *R) {
 		HorPos=MEMORY[0x2BA8];
 	}
 
-	// Broji frejmove.
-	//Cur_fps++;
-
-	// Usluzi SAVE/LOAD opcije.
-	//LoadSave (KEY_F2, Save, SAVE);
-	//LoadSave (KEY_F3, Load, LOAD);
-
-	//Z80_GetRegs (&R);        // Daj bre te registre ovamo ...
-
 	if (!(R->IFF & IFF_2))
 		Fassst++;
 	else
@@ -155,7 +148,7 @@ Uint8 ucitajStanje(char *fajl) {
 	}
 
 	// DOS savestate
-	if(fileSize(f) == 8268) {
+	if(file_size(f) == 8268) {
 		Z80_RegsDOS DOS_R;
 		fread(&DOS_R, 1, sizeof(Z80_RegsDOS), f);
 		fread(&MEMORY[0x2000], 1, KRAJ_RAMA-0x2000, f);
@@ -178,10 +171,41 @@ Uint8 ucitajStanje(char *fajl) {
 		if (DOS_R.IFF1) R.IFF+=1;
 		R.I = DOS_R.I;
 		R.R = (DOS_R.R&127)|(DOS_R.R2&128);
-	} else { // normal "modern" savestate
-		fread(&R, 1, sizeof(R) - sizeof(void*), f);
+	} else {
+		// i386-assumed save state (because the original developer didn't bother)
+
+		// pair AF,BC,DE,HL,IX,IY,PC,SP;       /* Main registers      */
+		// pair AF1,BC1,DE1,HL1;               /* Shadow registers    */
+		little_endian_fread(&R, sizeof(pair), 12, f);
+
+		// byte IFF,I;                         /* Interrupt registers */
+		// byte R;                             /* Refresh register    */
+		little_endian_fread(&(R.IFF), sizeof(byte), 3, f);
+		fseek(f, 1, SEEK_CUR);                 /* padding */
+
+		// int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
+		//                     /* between calls to LoopZ80()          */
+		// int IBackup;        /* Private, don't touch                */
+		little_endian_fread(&(R.IPeriod), sizeof(int32_t), 3, f);
+
+		// word IRequest;      /* Set to address of pending IRQ       */
+		little_endian_fread(&(R.IRequest), sizeof(word), 1, f);
+
+		// byte IAutoReset;    /* Set to 1 to autom. reset IRequest   */
+		// byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
+		little_endian_fread(&(R.IAutoReset), sizeof(byte), 2, f);
+
+		// word Trap;          /* Set Trap to address to trace from   */
+		little_endian_fread(&(R.Trap), sizeof(word), 1, f);
+		// byte Trace;         /* Set Trace=1 to start tracing        */
+		little_endian_fread(&(R.Trace), sizeof(byte), 1, f);
+		fseek(f, 1, SEEK_CUR);                /* padding */
+
+		// void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
 		fseek(f, sizeof(uint32_t), SEEK_CUR);
-		fread(&MEMORY[0x2000], 1, WORK_SPACE-0x2000, f);
+
+		// read memory
+		fread(&MEMORY[0x2000], 1, KRAJ_RAMA-0x2000, f);
 	}
 	fclose(f);
 	return 0;
@@ -196,8 +220,38 @@ Uint8 sacuvajStanje(const char *fajl) {
 		return 1;
 	}
 
-	fwrite(&R, 1, sizeof(R), f);
-	fwrite(&MEMORY[0x2000], 1, WORK_SPACE-0x2000, f);
+	// pair AF,BC,DE,HL,IX,IY,PC,SP;       /* Main registers      */
+	// pair AF1,BC1,DE1,HL1;               /* Shadow registers    */
+	little_endian_fwrite(&R, sizeof(pair), 12, f);
+
+	// byte IFF,I;                         /* Interrupt registers */
+	// byte R;                             /* Refresh register    */
+	little_endian_fwrite(&(R.IFF), sizeof(byte), 3, f);
+	fseek(f, 1, SEEK_CUR);                 /* padding */
+
+	// int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
+	//                     /* between calls to LoopZ80()          */
+	// int IBackup;        /* Private, don't touch                */
+	little_endian_fwrite(&(R.IPeriod), sizeof(int32_t), 3, f);
+
+	// word IRequest;      /* Set to address of pending IRQ       */
+	little_endian_fwrite(&(R.IRequest), sizeof(word), 1, f);
+
+	// byte IAutoReset;    /* Set to 1 to autom. reset IRequest   */
+	// byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
+	little_endian_fwrite(&(R.IAutoReset), sizeof(byte), 2, f);
+
+	// word Trap;          /* Set Trap to address to trace from   */
+	little_endian_fwrite(&(R.Trap), sizeof(word), 1, f);
+	// byte Trace;         /* Set Trace=1 to start tracing        */
+	little_endian_fwrite(&(R.Trace), sizeof(byte), 1, f);
+	fseek(f, 1, SEEK_CUR);                /* padding */
+
+	// void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
+	fseek(f, sizeof(uint32_t), SEEK_CUR);
+
+	// read memory
+	fwrite(&MEMORY[0x2000], 1, KRAJ_RAMA-0x2000, f);
 	fclose(f);
 	return 0;
 }

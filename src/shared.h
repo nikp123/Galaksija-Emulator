@@ -1,5 +1,8 @@
 #include "Z80/Z80.h"
 #include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define Uint8 uint8_t
 #define Uint16 uint16_t
@@ -33,23 +36,30 @@
 #define ORIGINAL_CENTER  4
 
 // Globalne variable
-extern Uint8 Fassst;	// ???????
-extern Uint8 *TZZ;		// TabelaZameneZnakova
-extern Uint8 EZP[512];	// Ekran Za Porediti
-extern char *MEMORY;
-extern int Z80_IRQ;		// Current IRQ status. Checked after EI occurs.
-extern int HorPos;
+extern uint8_t Fassst;	// ???????
+extern uint8_t *TZZ;		// TabelaZameneZnakova
+extern uint8_t EZP[512];	// Ekran Za Porediti
+extern uint8_t *MEMORY;
+extern int32_t Z80_IRQ;		// Current IRQ status. Checked after EI occurs.
+extern int32_t HorPos;
 
-extern int windowW, windowH;
+extern int32_t windowW, windowH;
 
 // Globalni objekti za render i prozor
 extern Z80 R;
 
-extern Uint32 zadnjiFrame; // sluzi za spasavanje proc od pozara
+extern uint32_t zadnjiFrame; // sluzi za spasavanje proc od pozara
 
 // OPCIJE ZA KORISNIKA
-extern _Bool crnaPodzadina;
-extern Uint32 FrameRate;
-extern Uint8 scaleMode;
+extern bool crnaPodzadina;
+extern uint32_t FrameRate;
+extern uint8_t scaleMode;
 
-extern size_t fileSize(FILE *fp);
+// utility functions that are shared within the entire codebase
+extern size_t file_size(FILE *fp);
+extern size_t little_endian_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+extern size_t endian_swap_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+extern size_t little_endian_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+extern size_t endian_swap_fread(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+
