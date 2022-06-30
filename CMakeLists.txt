@@ -8,16 +8,19 @@ find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(SDL2 REQUIRED sdl2)
 
-add_library(z80 inc/Z80/Z80.c)
+add_library(z80 inc/libz80/z80.c)
 
 add_library(tinyfiledialogs inc/tinyfiledialogs/tinyfiledialogs.c)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 add_executable(
 	GalEmu WIN32
 	src/main.c
-	src/z80.c
-	src/sdl2_main.c
-	src/shared.c
+	src/core.c
+	src/util/file.c
+	src/graphics.c
+	src/init.c
 )
 
 add_definitions(${SDL2_CFLAGS_OTHER})

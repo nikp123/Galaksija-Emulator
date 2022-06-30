@@ -1,66 +1,64 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#ifndef GALAXY_SHARED_H_
+#define GALAXY_SHARED_H_
+
 #include <stdint.h>
+#include <stdbool.h>
 
-#include "Z80/Z80.h"
+#include "../inc/libz80/z80.h"
 
-#define Uint8 uint8_t
-#define Uint16 uint16_t
-#define Uint32 uint32_t
+#include "util/endianess.h"
 
-// MAKROI
-#define RET_ON_ERR(x) { Uint16 e = x; if(e) return e; }
+#include "system.h"
+#include "error.h"
 
-// BOJE
-#define CRNA 0xff000000
-#define SIVA 0xff003535
-#define BELA 0xffffffff
+#ifdef UTIL_ENDIANESS_LITTLE
+    #define GALAXY_GRAPHICS_MODE_RGBX8888_DEFAULT_FOREGROUND 0xffffffff
+    #define GALAXY_GRAPHICS_MODE_RGBX8888_DEFAULT_BACKGROUND 0xff003535
+#else
+    #error "Not implemented!"
+#endif
 
-// SISTEMSKE KONSTANTE, ADRESE I OSTALE GLUPOSTI
-#define CPU_SPEED 3072000 // 6.144/2 MHz
-#define WORK_SPACE 0xFFFF
-#define KRAJ_RAMA 0x4000
+typedef enum {
+    GALAXY_GRAPHICS_MODE_RGBX8888,
+    GALAXY_GRAPHICS_MODE_RGB888,
+} galaxy_graphics_pixel_mode;
 
-// SPECIFIKACIJE
-#define MAX_X 256 // 32 karaktera
-#define MAX_Y 216 // 8*16 
+typedef uint32_t galaxy_character[GALAXY_FONT_HEIGHT][GALAXY_FONT_WIDTH];
 
-#define VISINA 13
-#define SIRINA 8
-#define BROJ_ZNAKOVA 128
+typedef struct {
+    uint64_t                   framerate;
+    uint64_t                   cpu_speed;
+    const bool                 default_colors;
+    uint64_t                   background;  // single pixel (no 10bit unfortunately)
+    uint64_t                   foreground;  // single pixel
+    const char*                firmware_path;
+    const char*                system_state_file;
+    const galaxy_graphics_pixel_mode graphics_mode;
+} galaxy_config;
 
-// METODI RAZLACENJA SLIKE
-#define CLOSEST_MULTIPLE 1
-#define STRETCH_ASPECT   2
-#define FULL_STRECH      3
-#define ORIGINAL_CENTER  4
+typedef struct {
+    Z80Context       context;
+    uint8_t          memory[GALAXY_ADDRESS_SPACE];
+    uint8_t          chargen[GALAXY_CHARGEN_SIZE];
+    uint8_t          charmap[GALAXY_CHARMAP_SIZE];
+    galaxy_character font_bitmap[GALAXY_FONT_COUNT];
 
-// Globalne variable
-extern uint8_t Fassst;	// ???????
-extern uint8_t *TZZ;		// TabelaZameneZnakova
-extern uint8_t EZP[512];	// Ekran Za Porediti
-extern uint8_t *MEMORY;
-extern int32_t Z80_IRQ;		// Current IRQ status. Checked after EI occurs.
-extern int32_t HorPos;
+    galaxy_config config;
+    galaxy_error  error;
+} galaxy_state;
 
-extern int32_t windowW, windowH;
+bool galaxy_run_frame(galaxy_state *state, void *framebuffer);
+bool galaxy_init(galaxy_state *state);
+void galaxy_reset(galaxy_state *state);
+void galaxy_trigger_nmi(galaxy_state *state);
 
-// Globalni objekti za render i prozor
-extern Z80 R;
+byte galaxy_mem_read(galaxy_state *state, ushort address);
+void galaxy_mem_write(galaxy_state *state, ushort address, byte data);
+byte galaxy_io_read(galaxy_state *state, ushort address);
+void galaxy_io_write(galaxy_state *state, ushort address, byte data);
 
-extern uint32_t zadnjiFrame; // sluzi za spasavanje proc od pozara
+bool galaxy_load_state(galaxy_state *state, const char *filename);
+bool galaxy_save_state(galaxy_state *state, const char *filename);
 
-// OPCIJE ZA KORISNIKA
-extern bool crnaPodzadina;
-extern uint32_t FrameRate;
-extern uint8_t scaleMode;
-
-// utility functions that are shared within the entire codebase
-extern size_t file_size(FILE *fp);
-extern size_t little_endian_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
-extern size_t endian_swap_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
-extern size_t little_endian_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
-extern size_t endian_swap_fread(const void *ptr, size_t size, size_t nmemb, FILE *stream);
-
+#endif
 
