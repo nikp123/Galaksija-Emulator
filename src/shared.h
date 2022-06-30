@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../inc/libz80/z80.h"
+#include "z80.h"
 
 #include "util/endianess.h"
 
@@ -26,14 +26,14 @@ typedef enum {
 typedef uint32_t galaxy_character[GALAXY_FONT_HEIGHT][GALAXY_FONT_WIDTH];
 
 typedef struct {
-    uint64_t                   framerate;
-    uint64_t                   cpu_speed;
-    const bool                 default_colors;
-    uint64_t                   background;  // single pixel (no 10bit unfortunately)
-    uint64_t                   foreground;  // single pixel
-    const char*                firmware_path;
-    const char*                system_state_file;
-    const galaxy_graphics_pixel_mode graphics_mode;
+    uint64_t             framerate;
+    uint64_t             cpu_speed;
+    bool                 default_colors;
+    uint64_t             background;  // single pixel (no 10bit unfortunately)
+    uint64_t             foreground;  // single pixel
+    char*                firmware_path;
+    char*                system_state_file;
+    galaxy_graphics_pixel_mode graphics_mode;
 } galaxy_config;
 
 typedef struct {
@@ -45,6 +45,10 @@ typedef struct {
 
     galaxy_config config;
     galaxy_error  error;
+
+    struct {
+        uint8_t resume_mode;
+    } other;
 } galaxy_state;
 
 bool galaxy_run_frame(galaxy_state *state, void *framebuffer);

@@ -10,8 +10,22 @@
 bool galaxy_run_frame(galaxy_state *state, void *framebuffer) {
     Z80ExecuteTStates(&state->context, state->config.cpu_speed/state->config.framerate);
 
-    if(galaxy_draw(state, framebuffer) == false) {
-        return false;
+    if(!state->context.IFF2)
+        state->other.resume_mode++;
+    else state->other.resume_mode = 0;
+
+    switch(state->other.resume_mode) {
+        case 0:
+            if(galaxy_draw(state, framebuffer) == false) {
+                return false;
+            }
+            break;
+        case 1:
+            galaxy_graphics_screen_clear(state, framebuffer);
+            break;
+        case 2:
+            state->other.resume_mode--;
+            break;
     }
 
     /**
@@ -35,7 +49,7 @@ byte galaxy_mem_read(galaxy_state *state, ushort address) {
 }
 
 void galaxy_mem_write(galaxy_state *state, ushort address, byte data) {
-    if(address >= GALAXY_RAM_ADDR_START && address < GALAXY_RAM_ADDR_END) {
+    if(address >= GALAXY_FREE_RAM_ADDR_START && address < GALAXY_RAM_ADDR_END) {
         state->memory[address&0xffff] = data;
     }
 }
