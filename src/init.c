@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "shared.h"
+#include "galaxy.h"
 #include "system.h"
 #include "graphics.h"
 

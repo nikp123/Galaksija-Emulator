@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "shared.h"
+#include "galaxy.h"
 
 // TODO: docs
 extern bool galaxy_graphics_generate_bitmap_font(galaxy_state *state);

@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "shared.h"
+#include "galaxy.h"
 
 bool galaxy_graphics_colors_generate(galaxy_state *state) {
     if(state->config.default_colors == true) {

@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-#include "shared.h"
+#include "galaxy.h"
 
 #include "tinyfiledialogs/tinyfiledialogs.h"
 

@@ -3,7 +3,7 @@
 
 #include "util/file.h"
 
-#include "shared.h"
+#include "galaxy.h"
 #include "graphics.h"
 #include "dos.h"
 
