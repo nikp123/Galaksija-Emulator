@@ -1,6 +1,8 @@
 #ifndef UTIL_ENDIANESS_H_
 #define UTIL_ENDIANESS_H_
 
+#include <endian.h>
+
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
 	defined(__BIG_ENDIAN__) || \
 	defined(__ARMEB__) || \
