@@ -43,6 +43,8 @@ typedef struct {
     uint8_t          charmap[GALAXY_CHARMAP_SIZE];
     galaxy_character font_bitmap[GALAXY_FONT_COUNT];
 
+    uint8_t          char_framebuffer[GALAXY_CHAR_COUNT];
+
     galaxy_config config;
     galaxy_error  error;
 

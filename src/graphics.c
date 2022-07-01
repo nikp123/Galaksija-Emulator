@@ -64,22 +64,49 @@ bool galaxy_graphics_screen_clear(galaxy_state *state, void *framebuffer) {
     return true;
 }
 
+static inline void galaxy_draw_char_RGBX8888(uint32_t *corrected_framebuffer,
+                                galaxy_character *galaxy_char_bitmap) {
+    #if GALAXY_FONT_WIDTH != 8
+        #error "Incompatible draw!"
+    #endif
+    #if GALAXY_FONT_HEIGHT != 13
+        #error "Incompatible draw!"
+    #endif
+
+    for(int i = 0; i < 13; i++) {
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][0];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][1];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][2];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][3];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][4];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][5];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][6];
+        (*corrected_framebuffer++) = (*galaxy_char_bitmap)[i][7];
+        corrected_framebuffer += GALAXY_HORIZONTAL_RESOLUTION - GALAXY_FONT_WIDTH;
+    }
+}
+
 bool galaxy_draw(galaxy_state *state, void *framebuffer) {
     int offset;
     switch(state->config.graphics_mode) {
         case GALAXY_GRAPHICS_MODE_RGBX8888: {
-            uint32_t *fb = (uint32_t*)framebuffer;
-            for(uint32_t i = 0; i < GALAXY_VERTICAL_CHARS; i++) {
-                for(uint32_t j = 0; j < GALAXY_HORIZONTAL_CHARS; j++) {
-                    char character = state->charmap[
-                        state->memory[GALAXY_SCREEN_ADDR_START+i*GALAXY_HORIZONTAL_CHARS + j]];
-                    for(uint32_t k = 0; k < GALAXY_FONT_HEIGHT; k++) {
-                        memcpy(fb, &state->font_bitmap[(character&0x7F)][k], sizeof(uint32_t)*GALAXY_FONT_WIDTH);
-                        fb += GALAXY_HORIZONTAL_RESOLUTION;
-                    }
-                    fb -= (GALAXY_HORIZONTAL_RESOLUTION * GALAXY_FONT_HEIGHT) - GALAXY_FONT_WIDTH;
-                }
-                fb += GALAXY_HORIZONTAL_RESOLUTION * (GALAXY_FONT_HEIGHT-1);
+            for(uint16_t c = 0; c < GALAXY_CHAR_COUNT; c++) {
+                uint8_t raw_char = state->memory[GALAXY_SCREEN_ADDR_START+c];
+
+                // skip same characters
+                if(state->char_framebuffer[c] == raw_char)
+                    continue;
+
+                uint32_t *fb = (uint32_t*)framebuffer;
+                uint16_t i = c&0x1f;
+                uint16_t j = c>>5;
+
+                fb += GALAXY_HORIZONTAL_RESOLUTION * GALAXY_FONT_HEIGHT * j;
+                fb += GALAXY_FONT_WIDTH * i;
+
+                uint8_t conv_char = state->charmap[raw_char];
+
+                galaxy_draw_char_RGBX8888(fb, &state->font_bitmap[(conv_char&0x7F)]);
             }
             break;
         }
@@ -87,6 +114,10 @@ bool galaxy_draw(galaxy_state *state, void *framebuffer) {
             state->error = GALAXY_DRAW_PIXEL_FORMAT_INVALID;
             return false;
     }
+
+    // assume that the buffer has been copied over
+    memcpy(state->char_framebuffer, &state->memory[GALAXY_SCREEN_ADDR_START],
+            GALAXY_CHAR_COUNT*sizeof(uint8_t));
 
     return true;
 }

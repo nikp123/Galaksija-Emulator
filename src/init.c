@@ -33,6 +33,9 @@ void galaxy_reset(galaxy_state *state) {
     memset(&state->memory[GALAXY_SCREEN_ADDR_START], 0xFF, GALAXY_SCREEN_ADDR_END-GALAXY_SCREEN_ADDR_START);
 #endif
 
+    // reset 2nd-ary char framebuffer
+    memset(state->char_framebuffer, 0x00, GALAXY_CHAR_COUNT*sizeof(uint8_t));
+
     // Keyboard
     memset(&state->memory[GALAXY_KEYBOARD_ADDR_START], 0xFF, GALAXY_KEYBOARD_ADDR_END-GALAXY_KEYBOARD_ADDR_START);
 }
