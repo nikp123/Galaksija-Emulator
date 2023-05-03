@@ -56,6 +56,7 @@ void event(SDL_Window *window, galaxy_state *state) {
             if(file != NULL)
                 galaxy_load_state(state, file);
         }
+        return;
     }
 
     for (uint8_t A=1; A<54; A++) {
