@@ -9,7 +9,7 @@ static const SDL_Keycode Kmap[54] = { 0, SDLK_a, SDLK_b, SDLK_c,
 	SDLK_r, SDLK_s, SDLK_t, SDLK_u, SDLK_v, SDLK_w, SDLK_x,
 	SDLK_y, SDLK_z, SDLK_UP, SDLK_DOWN, SDLK_LEFT, SDLK_RIGHT,
 	SDLK_SPACE, SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5,
-	SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_COLON, SDLK_QUOTE,
+	SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_SEMICOLON, SDLK_QUOTE,
 	SDLK_COMMA, SDLK_EQUALS, SDLK_PERIOD, SDLK_SLASH, SDLK_RETURN,
 	SDLK_TAB, SDLK_LALT, SDLK_DELETE, SDLK_SCROLLLOCK, SDLK_LSHIFT };
 
@@ -51,7 +51,7 @@ void event(SDL_Window *window, galaxy_state *state) {
                 galaxy_save_state(state, file);
         } else if(kS[SDL_SCANCODE_L]) {
             // load
-	    const char *file = tinyfd_openFileDialog("Load emulator state", 
+	    const char *file = tinyfd_openFileDialog("Load emulator state",
                                 NULL, 1, galaxy_state_file_types, "Galaksija emulator states", 0);
             if(file != NULL)
                 galaxy_load_state(state, file);
