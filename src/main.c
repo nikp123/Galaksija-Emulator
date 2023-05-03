@@ -36,7 +36,7 @@ void event(SDL_Window *window, galaxy_state *state) {
     // Iako ovo moze biti malo stetan dizajn, ja cu ga otpratiti radi jednostavnosti
     const Uint8 *kS = SDL_GetKeyboardState(NULL); // kS == keyboardState
 
-    if(kS[SDL_SCANCODE_LCTRL]) {
+    if(kS[SDL_SCANCODE_LCTRL] || kS[SDL_SCANCODE_RCTRL]) {
         if(kS[SDL_SCANCODE_Q]) { // Izlaz
             exit(EXIT_SUCCESS);
         } else if(kS[SDL_SCANCODE_R]) {
