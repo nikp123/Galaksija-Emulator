@@ -26,3 +26,4 @@ add_executable(
 add_definitions(${SDL2_CFLAGS_OTHER})
 include_directories(${SDL2_INCLUDE_DIRS} inc inc/libz80)
 target_link_libraries(GalEmu ${SDL2_LIBRARIES} tinyfiledialogs z80 m)
+target_link_directories(GalEmu PUBLIC ${SDL2_LIBRARY_DIRS})
